@@ -176,12 +176,48 @@ Configure **Success and Failure** for every subcategory below.
 
 Enabling the audit policy above only **generates** the events on the DC. To land them in the `SecurityEvent` table, the Azure Monitor Agent needs a **DCR** with an XPath filter for these Event IDs.
 
-> **XPath limits (Microsoft Learn):** a DCR allows **up to 20 EventID expressions per XPath query** and **up to 100 queries per rule**. We chunk at **10 Event IDs per line** to stay well within the limit and keep it readable — all **50** DC Event IDs fit in **5 lines**.
-
 > ⚠️ **Portal vs. API — read this first.** In the **portal GUI** ("Add data source ▸ Custom"), paste **one raw XPath line at a time** and click **Add** for each — **no quotes, no commas, no `"xPathQueries": [ ]` wrapper**. Pasting the JSON array into a single box causes *"XPath query is invalid / invalid parenthesis at index 29 / more than 20 expressions."* The JSON array form is **only** for API / ARM / Bicep deployment.
 
+> 💡 **Easiest path — skip the GUI entirely.** There is **no bulk paste** in the portal (one XPath per **Add** box). Deploy the whole rule in **one command** from the ready-made [`Tier0-DC-DCR.json`](Tier0-DC-DCR.json) file — no clicking, no copy-paste-per-box.
+
 <details open>
-<summary><b>▸ Portal GUI — paste each line into its own box (5 separate Add actions)</b></summary>
+<summary><b>▸ One-command deploy (recommended — no GUI)</b></summary>
+
+**1. Download the rule file:** [`Tier0-DC-DCR.json`](Tier0-DC-DCR.json) and set your workspace ID inside it (`<WORKSPACE_RESOURCE_ID>`).
+
+**Azure CLI:**
+```bash
+az monitor data-collection rule create \
+  --name "Tier0" \
+  --resource-group "<RESOURCE_GROUP>" \
+  --location "<AZURE_REGION>" \
+  --kind "Windows" \
+  --rule-file "Tier0-DC-DCR.json"
+```
+
+**PowerShell (Az.Monitor):**
+```powershell
+New-AzDataCollectionRule `
+  -Name "Tier0" `
+  -ResourceGroupName "<RESOURCE_GROUP>" `
+  -Location "<AZURE_REGION>" `
+  -JsonFilePath ".\Tier0-DC-DCR.json"
+```
+
+Then associate the rule with your DCs (Arc-enabled or Azure VMs):
+```bash
+az monitor data-collection rule association create \
+  --name "Tier0-DC-assoc" \
+  --rule-id "/subscriptions/<SUB>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Insights/dataCollectionRules/Tier0" \
+  --resource "/subscriptions/<SUB>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.HybridCompute/machines/<DC_NAME>"
+```
+
+</details>
+
+> ⚠️ **XPath limits (Microsoft Learn):** a DCR allows **up to 20 EventID expressions per XPath query** and **up to 100 queries per rule**. We chunk at **10 Event IDs per line** — all **50** DC Event IDs fit in **5 lines**.
+
+<details>
+<summary><b>▸ Portal GUI — paste each line into its own box (fallback: 5 separate Add actions)</b></summary>
 
 ```
 Security!*[System[(EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4672) or (EventID=4673) or (EventID=4674)]]
