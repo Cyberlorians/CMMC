@@ -178,8 +178,33 @@ Enabling the audit policy above only **generates** the events on the DC. To land
 
 > **XPath limits (Microsoft Learn):** a DCR allows **up to 20 EventID expressions per XPath query** and **up to 100 queries per rule**. We chunk at **10 Event IDs per line** to stay well within the limit and keep it readable — all **50** DC Event IDs fit in **5 lines**.
 
+> ⚠️ **Portal vs. API — read this first.** In the **portal GUI** ("Add data source ▸ Custom"), paste **one raw XPath line at a time** and click **Add** for each — **no quotes, no commas, no `"xPathQueries": [ ]` wrapper**. Pasting the JSON array into a single box causes *"XPath query is invalid / invalid parenthesis at index 29 / more than 20 expressions."* The JSON array form is **only** for API / ARM / Bicep deployment.
+
+<details open>
+<summary><b>▸ Portal GUI — paste each line into its own box (5 separate Add actions)</b></summary>
+
+```
+Security!*[System[(EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4672) or (EventID=4673) or (EventID=4674)]]
+```
+```
+Security!*[System[(EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722) or (EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728)]]
+```
+```
+Security!*[System[(EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753)]]
+```
+```
+Security!*[System[(EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4870) or (EventID=4882) or (EventID=4885)]]
+```
+```
+Security!*[System[(EventID=4887) or (EventID=4888) or (EventID=4890) or (EventID=4896) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004)]]
+```
+
+*Each block above = one box. Click **Add** after pasting each, then **Next ▸ Review + create**.*
+
+</details>
+
 <details>
-<summary><b>▸ xPathQueries snippet (drop into an existing DCR)</b></summary>
+<summary><b>▸ API / ARM — xPathQueries array (for programmatic deployment only)</b></summary>
 
 ```json
 "xPathQueries": [
