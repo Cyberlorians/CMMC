@@ -172,10 +172,86 @@ Configure **Success and Failure** for every subcategory below.
 
 ---
 
+## Data Collection Rule (DCR) — Sentinel ingestion
+
+Enabling the audit policy above only **generates** the events on the DC. To land them in the `SecurityEvent` table, the Azure Monitor Agent needs a **DCR** with an XPath filter for these Event IDs.
+
+> **XPath limits (Microsoft Learn):** a DCR allows **up to 20 EventID expressions per XPath query** and **up to 100 queries per rule**. We chunk at **10 Event IDs per line** to stay well within the limit and keep it readable — all **50** DC Event IDs fit in **5 lines**.
+
+<details>
+<summary><b>▸ xPathQueries snippet (drop into an existing DCR)</b></summary>
+
+```json
+"xPathQueries": [
+  "Security!*[System[(EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4672) or (EventID=4673) or (EventID=4674)]]",
+  "Security!*[System[(EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722) or (EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728)]]",
+  "Security!*[System[(EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753)]]",
+  "Security!*[System[(EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4870) or (EventID=4882) or (EventID=4885)]]",
+  "Security!*[System[(EventID=4887) or (EventID=4888) or (EventID=4890) or (EventID=4896) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004)]]"
+]
+```
+
+</details>
+
+<details>
+<summary><b>▸ Full DCR definition (ready to deploy — replace the two placeholders)</b></summary>
+
+```json
+{
+  "location": "<AZURE_REGION>",
+  "kind": "Windows",
+  "properties": {
+    "dataSources": {
+      "windowsEventLogs": [
+        {
+          "name": "cmmc-dc-securityevents",
+          "streams": [ "Microsoft-SecurityEvent" ],
+          "xPathQueries": [
+            "Security!*[System[(EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4672) or (EventID=4673) or (EventID=4674)]]",
+            "Security!*[System[(EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722) or (EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728)]]",
+            "Security!*[System[(EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753)]]",
+            "Security!*[System[(EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4870) or (EventID=4882) or (EventID=4885)]]",
+            "Security!*[System[(EventID=4887) or (EventID=4888) or (EventID=4890) or (EventID=4896) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004)]]"
+          ]
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "<WORKSPACE_RESOURCE_ID>",
+          "name": "sentinelWorkspace"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": [ "Microsoft-SecurityEvent" ],
+        "destinations": [ "sentinelWorkspace" ]
+      }
+    ]
+  }
+}
+```
+
+**Placeholders:** `<AZURE_REGION>` (e.g. `usgovvirginia`) · `<WORKSPACE_RESOURCE_ID>` = full resource ID of the Sentinel Log Analytics workspace.
+
+</details>
+
+> **Tip:** Validate any XPath line locally before deploying:
+> ```powershell
+> Get-WinEvent -LogName Security -FilterXPath '*[System[(EventID=4662)]]' -MaxEvents 1
+> ```
+> Returns an event = valid · "No events found" = valid but none present yet · "query is invalid" = fix syntax.
+
+---
+
 ## Sources
 
 - [Configure Windows event auditing (Defender for Identity)](https://learn.microsoft.com/defender-for-identity/deploy/configure-windows-event-collection)
 - [Advanced Audit Policy Configuration (AD DS)](https://learn.microsoft.com/windows-server/identity/ad-ds/plan/security-best-practices/advanced-audit-policy-configuration)
 - [Windows security baseline — System Audit Policies](https://learn.microsoft.com/azure/governance/policy/samples/guest-configuration-baseline-windows)
+- [Collect Windows events with Azure Monitor Agent (XPath filtering)](https://learn.microsoft.com/azure/azure-monitor/vm/data-collection-windows-events)
+- [Azure Monitor service limits — Data collection rules](https://learn.microsoft.com/azure/azure-monitor/fundamentals/service-limits#data-collection-rules)
 - [DoD CIO — About CMMC](https://dodcio.defense.gov/cmmc/About/)
 - [Cyberlorians NIST Framework Dashboard](https://cyberlorians.github.io/nistframework/)
