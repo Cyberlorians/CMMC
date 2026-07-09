@@ -174,132 +174,71 @@ Configure **Success and Failure** for every subcategory below.
 
 ## Data Collection Rule (DCR) — Sentinel ingestion
 
-Enabling the audit policy above only **generates** the events on the DC. To land them in the `SecurityEvent` table, the Azure Monitor Agent needs a **DCR** with an XPath filter for these Event IDs.
+Enabling the audit policy above only makes the events appear **on the DC**. To land them in the `SecurityEvent` table in Sentinel, the Azure Monitor Agent (AMA) needs a **DCR** that says which Event IDs to collect.
 
-> ⚠️ **Portal vs. API — read this first.** In the **portal GUI** ("Add data source ▸ Custom"), paste **one raw XPath line at a time** and click **Add** for each — **no quotes, no commas, no `"xPathQueries": [ ]` wrapper**. Pasting the JSON array into a single box causes *"XPath query is invalid / invalid parenthesis at index 29 / more than 20 expressions."* The JSON array form is **only** for API / ARM / Bicep deployment.
+You build this entirely in the **Sentinel portal** — no scripts, no CLI. Just paste the XPath lines below.
 
-> 💡 **Easiest path — skip the GUI entirely.** There is **no bulk paste** in the portal (one XPath per **Add** box). Deploy the whole rule in **one command** from the ready-made [`Tier0-DC-DCR.json`](Tier0-DC-DCR.json) file — no clicking, no copy-paste-per-box.
+### How it works (2 steps)
 
-<details open>
-<summary><b>▸ One-command deploy (recommended — no GUI)</b></summary>
+1. **Deploy the Common set first** via the built-in **Windows Security Events via AMA** connector (choose the **Common** event set). This creates the DCR and wires your DCs to it.
+2. **Edit that same DCR** → switch collection to **Custom** → paste the **Domain Controller XPath lines** below to add the DC / CMMC / MDI Event IDs on top of Common.
 
-**1. Download the rule file:** [`Tier0-DC-DCR.json`](Tier0-DC-DCR.json) and set your workspace ID inside it (`<WORKSPACE_RESOURCE_ID>`).
+> 💡 **One XPath per box.** The portal has no bulk paste — paste **one line**, click **Add**, repeat. No quotes, no commas, no `"xPathQueries": [ ]` wrapper. Keep each line to **≤ 20 Event IDs** (the portal rejects more).
 
-**Azure CLI:**
-```bash
-az monitor data-collection rule create \
-  --name "Tier0" \
-  --resource-group "<RESOURCE_GROUP>" \
-  --location "<AZURE_REGION>" \
-  --kind "Windows" \
-  --rule-file "Tier0-DC-DCR.json"
+### Step-by-step (portal)
+
+1. In **Microsoft Sentinel** → **Content hub**, install/open **Windows Security Events via AMA**.
+2. Select **Open connector page** → **+ Create data collection rule**.
+3. Name it (e.g. `DCR-DomainControllers-CMMC-L2`), pick your subscription / resource group.
+4. **Resources** tab → add your Domain Controllers (Azure or Azure Arc–enabled).
+5. **Collect** tab → choose **Custom**.
+6. Paste each XPath line below, clicking **Add** after each one.
+7. **Review + create.**
+
+Events start flowing to `SecurityEvent` within a few minutes.
+
+### 📋 Domain Controller Event IDs — copy/paste (3 lines)
+
+Paste these three lines into the **Custom** XPath box, one at a time:
+
+```
+Security!*[System[((EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4672) or (EventID=4673) or (EventID=4674) or (EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722))]]
 ```
 
-**PowerShell (Az.Monitor):**
+```
+Security!*[System[((EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728) or (EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753))]]
+```
+
+```
+Security!*[System[((EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004))]]
+```
+
+### 📋 Optional — AD Certificate Services (only if the DC is also a CA)
+
+Add this **4th line** only when the DC runs AD CS:
+
+```
+Security!*[System[((EventID=4870) or (EventID=4882) or (EventID=4885) or (EventID=4887) or (EventID=4888) or (EventID=4890) or (EventID=4896))]]
+```
+
+### ✅ Verify
+
+**In Sentinel** — confirm events are landing:
+
+```kql
+SecurityEvent
+| where TimeGenerated > ago(1h)
+| summarize Count = count() by EventID
+| sort by Count desc
+```
+
+**On the DC** — validate a single XPath line:
+
 ```powershell
-New-AzDataCollectionRule `
-  -Name "Tier0" `
-  -ResourceGroupName "<RESOURCE_GROUP>" `
-  -Location "<AZURE_REGION>" `
-  -JsonFilePath ".\Tier0-DC-DCR.json"
+Get-WinEvent -LogName Security -FilterXPath '*[System[(EventID=4662)]]' -MaxEvents 1
 ```
 
-Then associate the rule with your DCs (Arc-enabled or Azure VMs):
-```bash
-az monitor data-collection rule association create \
-  --name "Tier0-DC-assoc" \
-  --rule-id "/subscriptions/<SUB>/resourceGroups/<RESOURCE_GROUP>/providers/Microsoft.Insights/dataCollectionRules/Tier0" \
-</details>
-
-> **Recommended workflow:** first **deploy the Common Security Event IDs with Sentinel** (the built-in *Windows Security Events via AMA* connector → **Common** set). After that connector/DCR is in place, **adjust the DCR to add the DC Event IDs above in combination with Common**. Below is the **Common SecIDs & M2131 User Access Category** set for reference.
-
-<details>
-<summary><b>▸ Common Security Event IDs — M2131 User Access Category (deploy first via Sentinel)</b></summary>
-
-```json
-{
-  "xPathQueries": [
-    "Security!*[System[((EventID=1) or (EventID=299) or (EventID=300) or (EventID=324) or (EventID=340) or (EventID=403) or (EventID=404) or (EventID=410) or (EventID=411) or (EventID=412) or (EventID=413) or (EventID=431) or (EventID=500) or (EventID=501) or (EventID=1100))]]",
-    "Security!*[System[((EventID=1102) or (EventID=1107) or (EventID=1108) or (EventID=4608) or (EventID=4610) or (EventID=4611) or (EventID=4614) or (EventID=4622) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4648) or (EventID=4649) or (EventID=4657))]]",
-    "Security!*[System[((EventID=4661) or (EventID=4662) or (EventID=4663) or (EventID=4665) or (EventID=4666) or (EventID=4667) or (EventID=4670) or (EventID=4672) or (EventID=4673) or (EventID=4674) or (EventID=4675) or (EventID=4688) or (EventID=4689) or (EventID=4697) or (EventID=4700))]]",
-    "Security!*[System[((EventID=4702) or (EventID=4704) or (EventID=4705) or (EventID=4716) or (EventID=4717) or (EventID=4718) or (EventID=4719) or (EventID=4720) or (EventID=4722) or (EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4727) or (EventID=4728))]]",
-    "Security!*[System[((EventID=4729) or (EventID=4732) or (EventID=4733) or (EventID=4735) or (EventID=4737) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4742) or (EventID=4744) or (EventID=4745) or (EventID=4746) or (EventID=4750) or (EventID=4751) or (EventID=4752))]]",
-    "Security!*[System[((EventID=4754) or (EventID=4755) or (EventID=4756) or (EventID=4757) or (EventID=4760) or (EventID=4761) or (EventID=4762) or (EventID=4764) or (EventID=4767) or (EventID=4768) or (EventID=4771) or (EventID=4774) or (EventID=4778) or (EventID=4779) or (EventID=4781))]]",
-    "Security!*[System[((EventID=4793) or (EventID=4797) or (EventID=4798) or (EventID=4799) or (EventID=4800) or (EventID=4801) or (EventID=4802) or (EventID=4803) or (EventID=4825) or (EventID=4826) or (EventID=4870) or (EventID=4886) or (EventID=4887) or (EventID=4888) or (EventID=4893))]]",
-    "Security!*[System[((EventID=4898) or (EventID=4902) or (EventID=4904) or (EventID=4905) or (EventID=4907) or (EventID=4931) or (EventID=4932) or (EventID=4933) or (EventID=4946) or (EventID=4948) or (EventID=4956) or (EventID=4985) or (EventID=5024) or (EventID=5033) or (EventID=5059))]]",
-    "Security!*[System[((EventID=5136) or (EventID=5137) or (EventID=5140) or (EventID=5145) or (EventID=5632) or (EventID=6144) or (EventID=6145) or (EventID=6272) or (EventID=6273) or (EventID=6278) or (EventID=6416) or (EventID=6423) or (EventID=6424) or (EventID=8001) or (EventID=8002))]]",
-    "Security!*[System[((EventID=8003) or (EventID=8004) or (EventID=8005) or (EventID=8006) or (EventID=8007) or (EventID=8222) or (EventID=26401) or (EventID=30004))]]"
-  ]
-}
-```
-
-</details>
-
-<details>
-<summary><b>▸ API / ARM — xPathQueries array (for programmatic deployment only)</b></summary>
-
-```json
-"xPathQueries": [
-  "Security!*[System[(EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4672) or (EventID=4673) or (EventID=4674)]]",
-  "Security!*[System[(EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722) or (EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728)]]",
-  "Security!*[System[(EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753)]]",
-  "Security!*[System[(EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4870) or (EventID=4882) or (EventID=4885)]]",
-  "Security!*[System[(EventID=4887) or (EventID=4888) or (EventID=4890) or (EventID=4896) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004)]]"
-]
-```
-
-</details>
-
-<details>
-<summary><b>▸ Full DCR definition (ready to deploy — replace the two placeholders)</b></summary>
-
-```json
-{
-  "location": "<AZURE_REGION>",
-  "kind": "Windows",
-  "properties": {
-    "dataSources": {
-      "windowsEventLogs": [
-        {
-          "name": "cmmc-dc-securityevents",
-          "streams": [ "Microsoft-SecurityEvent" ],
-          "xPathQueries": [
-            "Security!*[System[(EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4672) or (EventID=4673) or (EventID=4674)]]",
-            "Security!*[System[(EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722) or (EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728)]]",
-            "Security!*[System[(EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753)]]",
-            "Security!*[System[(EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4870) or (EventID=4882) or (EventID=4885)]]",
-            "Security!*[System[(EventID=4887) or (EventID=4888) or (EventID=4890) or (EventID=4896) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004)]]"
-          ]
-        }
-      ]
-    },
-    "destinations": {
-      "logAnalytics": [
-        {
-          "workspaceResourceId": "<WORKSPACE_RESOURCE_ID>",
-          "name": "sentinelWorkspace"
-        }
-      ]
-    },
-    "dataFlows": [
-      {
-        "streams": [ "Microsoft-SecurityEvent" ],
-        "destinations": [ "sentinelWorkspace" ]
-      }
-    ]
-  }
-}
-```
-
-**Placeholders:** `<AZURE_REGION>` (e.g. `usgovvirginia`) · `<WORKSPACE_RESOURCE_ID>` = full resource ID of the Sentinel Log Analytics workspace.
-
-</details>
-
-> **Tip:** Validate any XPath line locally before deploying:
-> ```powershell
-> Get-WinEvent -LogName Security -FilterXPath '*[System[(EventID=4662)]]' -MaxEvents 1
-> ```
-> Returns an event = valid · "No events found" = valid but none present yet · "query is invalid" = fix syntax.
+Returns an event = valid · "No events found" = valid but none present yet · "query is invalid" = fix syntax.
 
 ---
 
