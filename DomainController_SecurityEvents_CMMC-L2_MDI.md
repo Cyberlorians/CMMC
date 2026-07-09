@@ -71,6 +71,13 @@ Configure **Success and Failure** for every subcategory below.
 | **4634** | Account logged off | ✅ AU 3.3.1 | | Logon/Logoff ▸ Audit Logoff |
 | **4647** | User-initiated logoff | ✅ AU 3.3.1 | | Logon/Logoff ▸ Audit Logoff |
 | **4672** | Special privileges assigned to logon | ✅ AC 3.1.7 | | Logon/Logoff ▸ Special Logon |
+| **4627** | Group membership evaluated at logon | ✅ AU 3.3.1 | ✅ | Logon/Logoff ▸ Audit Group Membership |
+| **4778** | Session reconnected (RDP) | ✅ AU 3.3.1 | | Logon/Logoff ▸ Other Logon/Logoff Events |
+| **4779** | Session disconnected (RDP) | ✅ AU 3.3.1 | | Logon/Logoff ▸ Other Logon/Logoff Events |
+| **4800** | Workstation locked | ✅ AC 3.1.10 | | Logon/Logoff ▸ Other Logon/Logoff Events |
+| **4801** | Workstation unlocked | ✅ AC 3.1.10 | | Logon/Logoff ▸ Other Logon/Logoff Events |
+
+> ➕ Also enable **Logon/Logoff ▸ Audit Account Lockout** (Success and Failure). It records failed logons caused by a locked account (event **4625** with lockout status) — supporting **AC 3.1.8** alongside 4740 (Account Management).
 
 ## 3. Account Management — User Accounts
 
@@ -216,7 +223,7 @@ Security!*[System[((EventID=4723) or (EventID=4724) or (EventID=4725) or (EventI
 ```
 
 ```
-Security!*[System[((EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004))]]
+Security!*[System[((EventID=4627) or (EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4778) or (EventID=4779) or (EventID=4800) or (EventID=4801) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004))]]
 ```
 
 ### 📋 Optional — AD Certificate Services (only if the DC is also a CA)
