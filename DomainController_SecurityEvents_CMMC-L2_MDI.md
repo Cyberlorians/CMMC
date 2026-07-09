@@ -44,6 +44,12 @@ Computer Configuration ▸ Policies ▸ Windows Settings ▸ Security Settings
 
 Configure **Success and Failure** for every subcategory below.
 
+> ⚡ **Shortcut — apply all subcategories at once.** Instead of clicking each one, use the ready-made backup file [`AdvancedAudit_DC_CMMC-L2.csv`](AdvancedAudit_DC_CMMC-L2.csv). From an **elevated** prompt on the DC:
+> ```powershell
+> auditpol /restore /file:AdvancedAudit_DC_CMMC-L2.csv
+> ```
+> Or drop it in a GPO at `...\SYSVOL\<domain>\Policies\<GUID>\Machine\Microsoft\Windows NT\Audit\audit.csv`. Verify with `auditpol /get /category:*`.
+
 ---
 
 ## 1. Account Logon — Kerberos & NTLM
