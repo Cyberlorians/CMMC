@@ -344,12 +344,6 @@ Returns an event = valid · "No events found" = valid but none present yet · "q
 
 ---
 
-## Sources
+## Disclaimer
 
-- [Configure Windows event auditing (Defender for Identity)](https://learn.microsoft.com/defender-for-identity/deploy/configure-windows-event-collection)
-- [Advanced Audit Policy Configuration (AD DS)](https://learn.microsoft.com/windows-server/identity/ad-ds/plan/security-best-practices/advanced-audit-policy-configuration)
-- [Windows security baseline — System Audit Policies](https://learn.microsoft.com/azure/governance/policy/samples/guest-configuration-baseline-windows)
-- [Collect Windows events with Azure Monitor Agent (XPath filtering)](https://learn.microsoft.com/azure/azure-monitor/vm/data-collection-windows-events)
-- [Azure Monitor service limits — Data collection rules](https://learn.microsoft.com/azure/azure-monitor/fundamentals/service-limits#data-collection-rules)
-- [DoD CIO — About CMMC](https://dodcio.defense.gov/cmmc/About/)
-- [Cyberlorians NIST Framework Dashboard](https://cyberlorians.github.io/nistframework/)
+> This is **not** an official Microsoft document, product, or guidance. It is a community resource built by engineers who support the public sector, shared as-is under no warranty. Validate every setting against your own requirements and test before deploying to production. All product names and trademarks belong to their respective owners.
