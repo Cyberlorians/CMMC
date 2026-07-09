@@ -29,6 +29,8 @@
 | **CM** | Configuration Management |
 | **IA** | Identification and Authentication |
 | **MP** | Media Protection |
+| **SC** | System and Communications Protection |
+| **SI** | System and Information Integrity |
 
 > Both columns use the same **✅** marker so they read consistently at a glance.
 
@@ -155,6 +157,12 @@ Configure **Success and Failure** for every subcategory below.
 | **1102** | Security audit log cleared | ✅ AU 3.3.8 | | Always logged when the Security log is cleared |
 | **4616** | System time changed | ✅ AU 3.3.7 | | System ▸ Security State Change |
 | **7045** | A new service was installed | ✅ CM 3.4.3 | ✅ | System ▸ Security System Extension |
+| **4697** | A service was installed (Security log) | ✅ CM 3.4.3 | ✅ | System ▸ Security System Extension |
+| **4612** | Audit messages dropped (audit queue full) | ✅ AU 3.3.1 | | System ▸ System Integrity |
+| **5038** | Code integrity — image hash invalid | ✅ SI 3.14.1 | | System ▸ System Integrity |
+| **5025** | Windows Firewall service stopped | ✅ SC 3.13.1 | | System ▸ Other System Events |
+
+> Enable the **full System category** (all Success and Failure): Security State Change, Security System Extension, System Integrity, Other System Events, and IPsec Driver. All are **low-volume, high-integrity** signals. IPsec Driver is included for baseline parity (SC 3.13.x) even on non-IPsec DCs — it rarely fires but costs nothing.
 
 ## 10. AD Certificate Services — *only if the DC is also a CA*
 
@@ -241,11 +249,11 @@ Security!*[System[((EventID=1102) or (EventID=4616) or (EventID=4624) or (EventI
 ```
 
 ```
-Security!*[System[((EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728) or (EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753) or (EventID=4946) or (EventID=4947) or (EventID=4948))]]
+Security!*[System[((EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728) or (EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753) or (EventID=4946) or (EventID=4947) or (EventID=4948) or (EventID=4697))]]
 ```
 
 ```
-Security!*[System[((EventID=4627) or (EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4778) or (EventID=4779) or (EventID=4800) or (EventID=4801) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004))]]
+Security!*[System[((EventID=4627) or (EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4778) or (EventID=4779) or (EventID=4800) or (EventID=4801) or (EventID=5025) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004))]]
 ```
 
 ### 📋 Optional — AD Certificate Services (only if the DC is also a CA)
