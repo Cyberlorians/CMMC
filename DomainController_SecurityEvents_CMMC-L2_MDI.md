@@ -61,6 +61,8 @@ Configure **Success and Failure** for every subcategory below.
 | :---: | :--- | :--- | :---: | :--- |
 | **4768** | Kerberos TGT requested | ✅ AU 3.3.1 | | Account Logon ▸ Kerberos Authentication Service |
 | **4771** | Kerberos pre-authentication failed | ✅ IA 3.5.2 | | Account Logon ▸ Kerberos Authentication Service |
+| **4769** | Kerberos service ticket requested (**Kerberoasting**) | ✅ AU 3.3.1 | | Account Logon ▸ Kerberos Service Ticket Operations |
+| **4770** | Kerberos service ticket renewed | ✅ AU 3.3.1 | | Account Logon ▸ Kerberos Service Ticket Operations |
 | **4776** | Credentials validated (NTLM) | ✅ AU 3.3.1 | ✅ | Account Logon ▸ Credential Validation |
 | **8004** | NTLM authentication | ✅ AU 3.3.1 | ✅ | Security Options ▸ *Restrict NTLM: Audit NTLM authentication in this domain* |
 | **5168** | SPN check for SMB/SMB2 failed | ✅ AU 3.3.1 | | Security Options ▸ *Restrict NTLM: Audit NTLM authentication in this domain* |
@@ -94,6 +96,7 @@ Configure **Success and Failure** for every subcategory below.
 | **4726** | User account deleted | ✅ AU 3.3.1 | ✅ | Account Management ▸ User Account Management |
 | **4738** | User account changed | ✅ AU 3.3.1 | | Account Management ▸ User Account Management |
 | **4740** | User account locked out | ✅ AC 3.1.8 | | Account Management ▸ User Account Management |
+| **4782** | Password hash of an account was accessed | ✅ AU 3.3.1 | | Account Management ▸ Other Account Management Events |
 
 ## 4. Account Management — Security & Distribution Groups
 
@@ -193,6 +196,17 @@ Configure **Success and Failure** for every subcategory below.
 
 ---
 
+## 12. Detailed Tracking — Process & Device Activity
+
+| Event | Description | CMMC | MDI | GPO Subcategory |
+| :---: | :--- | :--- | :---: | :--- |
+| **4688** | A new process was created | ✅ AU 3.3.1 | | Detailed Tracking ▸ Process Creation |
+| **6416** | A new external device was recognized (PnP) | ✅ MP 3.8.7 | | Detailed Tracking ▸ PNP Activity |
+
+> 🔑 **Enable command-line capture.** Turn on **Administrative Templates ▸ System ▸ Audit Process Creation ▸ "Include command line in process creation events"** so **4688** records the full command line — essential for detection and for CMMC AU coverage. Process Creation and PNP Activity are set to **Success** (failures are not generated).
+
+---
+
 ## CMMC Level context
 
 | Level | Basis | Audit Logging Required? |
@@ -240,9 +254,9 @@ You build this entirely in the **Sentinel portal** — no scripts, no CLI. Just 
 
 Events start flowing to `SecurityEvent` within a few minutes.
 
-### 📋 Domain Controller Event IDs — copy/paste (3 lines)
+### 📋 Domain Controller Event IDs — copy/paste (4 lines)
 
-Paste these three lines into the **Custom** XPath box, one at a time:
+Paste these four lines into the **Custom** XPath box, one at a time:
 
 ```
 Security!*[System[((EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4663) or (EventID=4670) or (EventID=4672) or (EventID=4673) or (EventID=4674) or (EventID=4704) or (EventID=4705) or (EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722))]]
@@ -256,9 +270,15 @@ Security!*[System[((EventID=4723) or (EventID=4724) or (EventID=4725) or (EventI
 Security!*[System[((EventID=4627) or (EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4778) or (EventID=4779) or (EventID=4800) or (EventID=4801) or (EventID=5025) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004))]]
 ```
 
+```
+Security!*[System[((EventID=4688) or (EventID=4769) or (EventID=4770) or (EventID=4782) or (EventID=6416) or (EventID=6419) or (EventID=6420) or (EventID=6421) or (EventID=6422) or (EventID=6423))]]
+```
+
+> ⚠️ **Line 4 is higher-volume** (Process Creation 4688, Kerberos TGS 4769). If **Defender for Identity / for Endpoint** is deployed you can drop it — MDI detects Kerberoasting and process attacks natively. Include it if you want the raw events in Sentinel.
+
 ### 📋 Optional — AD Certificate Services (only if the DC is also a CA)
 
-Add this **4th line** only when the DC runs AD CS:
+Add this **5th line** only when the DC runs AD CS:
 
 ```
 Security!*[System[((EventID=4870) or (EventID=4882) or (EventID=4885) or (EventID=4887) or (EventID=4888) or (EventID=4890) or (EventID=4896))]]
