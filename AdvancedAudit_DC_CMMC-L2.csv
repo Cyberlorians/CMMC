@@ -18,4 +18,3 @@ Machine Name,Policy Target,Subcategory,Subcategory GUID,Inclusion Setting,Exclus
 ,System,Audit Authentication Policy Change,{0cce9230-69ae-11d9-bed3-505054503030},Success and Failure,,3
 ,System,Audit Security State Change,{0cce9210-69ae-11d9-bed3-505054503030},Success and Failure,,3
 ,System,Audit Security System Extension,{0cce9211-69ae-11d9-bed3-505054503030},Success and Failure,,3
-,System,Audit Certification Services,{0cce9221-69ae-11d9-bed3-505054503030},Success and Failure,,3

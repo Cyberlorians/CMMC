@@ -161,6 +161,11 @@ Configure **Success and Failure** for every subcategory below.
 | **4890** | Certificate manager settings changed | ✅ AU 3.3.1 | ✅ | Object Access ▸ Certification Services |
 | **4896** | Rows deleted from the certificate database | ✅ AU 3.3.1 | ✅ | Object Access ▸ Certification Services |
 
+> 🚫 **Plain DC (not a CA)?** Skip this whole category — **Object Access requires nothing** for CMMC on a non-CA DC. The backup file [`AdvancedAudit_DC_CMMC-L2.csv`](AdvancedAudit_DC_CMMC-L2.csv) **excludes** Certification Services for that reason. If the DC **is** a CA, set **Object Access ▸ Certification Services** to Success and Failure (GUI) or add this line to the CSV:
+> ```
+> ,System,Audit Certification Services,{0cce9221-69ae-11d9-bed3-505054503030},Success and Failure,,3
+> ```
+
 ---
 
 ## CMMC Level context
