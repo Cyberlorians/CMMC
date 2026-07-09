@@ -28,6 +28,7 @@
 | **AU** | Audit and Accountability |
 | **CM** | Configuration Management |
 | **IA** | Identification and Authentication |
+| **MP** | Media Protection |
 
 > Both columns use the same **✅** marker so they read consistently at a glance.
 
@@ -140,6 +141,12 @@ Configure **Success and Failure** for every subcategory below.
 | **4713** | Kerberos policy changed | ✅ CM 3.4.3 | | Policy Change ▸ Authentication Policy Change |
 | **4716** | Trusted domain information modified | ✅ CM 3.4.3 | | Policy Change ▸ Authentication Policy Change |
 | **4739** | Domain policy changed | ✅ CM 3.4.3 | | Policy Change ▸ Authentication Policy Change |
+| **4670** | Permissions on an object changed | ✅ AC 3.1.5 | | Policy Change ▸ Authorization Policy Change |
+| **4704** | User right assigned | ✅ AC 3.1.5 | | Policy Change ▸ Authorization Policy Change |
+| **4705** | User right removed | ✅ AC 3.1.5 | | Policy Change ▸ Authorization Policy Change |
+| **4946** | Windows Firewall rule added | ✅ CM 3.4.3 | | Policy Change ▸ MPSSVC Rule-Level Policy Change |
+| **4947** | Windows Firewall rule modified | ✅ CM 3.4.3 | | Policy Change ▸ MPSSVC Rule-Level Policy Change |
+| **4948** | Windows Firewall rule deleted | ✅ CM 3.4.3 | | Policy Change ▸ MPSSVC Rule-Level Policy Change |
 
 ## 9. System Integrity
 
@@ -165,6 +172,16 @@ Configure **Success and Failure** for every subcategory below.
 > ```
 > ,System,Audit Certification Services,{0cce9221-69ae-11d9-bed3-505054503030},Success and Failure,,3
 > ```
+
+---
+
+## 11. Object Access — Removable Storage
+
+| Event | Description | CMMC | MDI | GPO Subcategory |
+| :---: | :--- | :--- | :---: | :--- |
+| **4663** | Attempt to access a removable storage object | ✅ MP 3.8.7 | | Object Access ▸ Removable Storage |
+
+> Enabled because removable-media access is a **Media Protection** control (3.8.7). Low volume, and — unlike *Audit File System* — it needs **no SACLs** to generate events.
 
 ---
 
@@ -220,11 +237,11 @@ Events start flowing to `SecurityEvent` within a few minutes.
 Paste these three lines into the **Custom** XPath box, one at a time:
 
 ```
-Security!*[System[((EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4672) or (EventID=4673) or (EventID=4674) or (EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722))]]
+Security!*[System[((EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4663) or (EventID=4670) or (EventID=4672) or (EventID=4673) or (EventID=4674) or (EventID=4704) or (EventID=4705) or (EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722))]]
 ```
 
 ```
-Security!*[System[((EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728) or (EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753))]]
+Security!*[System[((EventID=4723) or (EventID=4724) or (EventID=4725) or (EventID=4726) or (EventID=4728) or (EventID=4729) or (EventID=4730) or (EventID=4732) or (EventID=4733) or (EventID=4738) or (EventID=4739) or (EventID=4740) or (EventID=4741) or (EventID=4743) or (EventID=4753) or (EventID=4946) or (EventID=4947) or (EventID=4948))]]
 ```
 
 ```
