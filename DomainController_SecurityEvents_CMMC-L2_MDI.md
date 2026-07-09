@@ -212,15 +212,31 @@ Configure **Success and Failure** for every subcategory below.
 
 ---
 
-## CMMC Level context
+## CMMC Level context — does this cover every level?
 
-| Level | Basis | Audit Logging Required? |
-| :--- | :--- | :--- |
-| **Level 1** — Basic Safeguarding of FCI | 15 reqs (FAR 52.204-21) | No |
-| **Level 2** — Broad Protection of CUI | 110 reqs (**NIST SP 800-171 R2**) | **Yes — the entire AU family** |
-| **Level 3** — Protection Against APTs | Level 2 + 24 reqs (NIST SP 800-172) | Reuses these logs; no new Event IDs |
+**Short answer: yes.** This one Domain Controller audit baseline satisfies the logging obligations at **every CMMC level that requires them**, and it is *forward-compatible* with the highest level. There is no separate "Level 3 event list" — the higher levels reuse the exact same Windows Event IDs and simply expect them to be **collected longer, correlated, and actively hunted**.
 
-> All DC events in this document satisfy **CMMC Level 2**.
+| Level | Focus | Basis | What this baseline provides |
+| :--- | :--- | :--- | :--- |
+| **Level 1** — Basic Safeguarding of **FCI** | 15 practices | FAR 52.204-21 | No audit-logging practice is required at L1. This baseline **exceeds** L1. |
+| **Level 2** — Broad Protection of **CUI** | 110 practices | **NIST SP 800-171 R2** | **Fully covered.** Every Event ID here maps to an **AU / AC / IA / CM / MP / SC / SI** practice (see the mapping in each section). This is the target level for this document. |
+| **Level 3** — Protection Against **APTs** | L2 + 24 enhancements | NIST SP 800-172 | **Same events, deeper use.** L3 adds *enhanced* requirements (e.g. security-relevant log **review/analysis**, **SIEM correlation**, longer retention, threat hunting) — it introduces **no new DC Event IDs**. This baseline is the data source those L3 controls operate on. |
+
+### How the levels build on the same data
+
+```
+  Level 1 (FCI)          Level 2 (CUI)                 Level 3 (APT)
+  ─────────────          ──────────────                ─────────────
+  no logging     ──▶     collect these Event IDs ──▶   same Event IDs, now
+  practice               (this document)               correlated in Sentinel,
+                                                        retained, and hunted
+```
+
+- **Collection** (this doc + the DCR) is what CMMC L2 verifies you have in place.
+- **Retention & review** — pipe `SecurityEvent` into **Microsoft Sentinel** (the DCR section below) and keep it per your System Security Plan. NIST 800-171 expects log **review**; 800-172 (L3) expects **automated correlation and analysis**.
+- **Defender for Identity** (the ✅ MDI column) adds the behavioral detections (DCSync, Kerberoasting, lateral movement) that make the **L3 "detect and respond to APT"** enhancements achievable on the same telemetry.
+
+> **Bottom line:** enabling everything in this document gives you a Domain Controller that is **compliant at Level 2 and audit-ready for Level 3** — the difference between the levels is *what you do with the logs*, not *which events you collect*.
 
 ---
 
