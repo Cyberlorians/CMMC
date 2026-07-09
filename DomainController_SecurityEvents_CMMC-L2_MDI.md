@@ -202,6 +202,11 @@ Configure **Success and Failure** for every subcategory below.
 | :---: | :--- | :--- | :---: | :--- |
 | **4688** | A new process was created | ✅ AU 3.3.1 | | Detailed Tracking ▸ Process Creation |
 | **6416** | A new external device was recognized (PnP) | ✅ MP 3.8.7 | | Detailed Tracking ▸ PNP Activity |
+| **6419** | A request was made to disable a device | ✅ MP 3.8.7 | | Detailed Tracking ▸ PNP Activity |
+| **6420** | A device was disabled | ✅ MP 3.8.7 | | Detailed Tracking ▸ PNP Activity |
+| **6421** | A request was made to enable a device | ✅ MP 3.8.7 | | Detailed Tracking ▸ PNP Activity |
+| **6422** | A device was enabled | ✅ MP 3.8.7 | | Detailed Tracking ▸ PNP Activity |
+| **6423** | Device installation forbidden by system policy | ✅ MP 3.8.7 | | Detailed Tracking ▸ PNP Activity |
 
 > 🔑 **Enable command-line capture.** Turn on **Administrative Templates ▸ System ▸ Audit Process Creation ▸ "Include command line in process creation events"** so **4688** records the full command line — essential for detection and for CMMC AU coverage. Process Creation and PNP Activity are set to **Success** (failures are not generated).
 
@@ -226,6 +231,40 @@ Configure **Success and Failure** for every subcategory below.
 3. Enable **DS Access ▸ Directory Service Changes** — off by default.
 4. Verify with **`auditpol.exe`**, not `rsop.msc`.
 5. Link a **dedicated GPO to the Domain Controllers OU** — do not edit the Default Domain Controllers Policy.
+
+---
+
+## Deploying the audit policy from the CSV
+
+The backup file [`AdvancedAudit_DC_CMMC-L2.csv`](AdvancedAudit_DC_CMMC-L2.csv) holds the **complete desired audit state** for a plain (non-CA) Domain Controller — **29 subcategories**. Deploy it one of two ways.
+
+> ⚠️ **`auditpol /restore` is a full replace.** Every subcategory *not* in the file is reset to **No Auditing**. This CSV **is** the entire baseline, so that is the intended behavior — do not merge it with a partial file.
+
+### Option A — Single DC (`auditpol`)
+
+From an **elevated** prompt on the DC:
+
+```powershell
+# Apply the full baseline
+auditpol /restore /file:AdvancedAudit_DC_CMMC-L2.csv
+
+# Confirm every subcategory took effect
+auditpol /get /category:*
+```
+
+### Option B — All DCs (Group Policy)
+
+1. Create/edit a GPO **linked to the Domain Controllers OU** (not the Default Domain Controllers Policy).
+2. Copy the file into that GPO's audit folder in SYSVOL, renamed **`audit.csv`**:
+   ```
+   \\<domain>\SYSVOL\<domain>\Policies\{GPO-GUID}\Machine\Microsoft\Windows NT\Audit\audit.csv
+   ```
+3. Enable **Security Options ▸ "Audit: Force audit policy subcategory settings (Windows Vista or later) to override audit policy category settings"** = **Enabled** (`SCENoApplyLegacyAuditPolicy = 1`).
+4. Run `gpupdate /force` on the DCs, then verify with `auditpol /get /category:*`.
+
+> The CSV **excludes** *Certification Services* (CA-only). If a DC is also a CA, add the line from [§10](#10-ad-certificate-services--only-if-the-dc-is-also-a-ca) to the CSV **before** deploying.
+>
+> 🔑 Two signals are **not** Advanced Audit subcategories and must be set separately: enable **Administrative Templates ▸ System ▸ Audit Process Creation ▸ "Include command line in process creation events"** (for 4688) and **Security Options ▸ "Restrict NTLM: Audit NTLM authentication in this domain"** (for 8004 / 5168).
 
 ---
 
@@ -259,7 +298,7 @@ Events start flowing to `SecurityEvent` within a few minutes.
 Paste these four lines into the **Custom** XPath box, one at a time:
 
 ```
-Security!*[System[((EventID=1102) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4663) or (EventID=4670) or (EventID=4672) or (EventID=4673) or (EventID=4674) or (EventID=4704) or (EventID=4705) or (EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722))]]
+Security!*[System[((EventID=1102) or (EventID=4612) or (EventID=4616) or (EventID=4624) or (EventID=4625) or (EventID=4634) or (EventID=4647) or (EventID=4662) or (EventID=4663) or (EventID=4670) or (EventID=4672) or (EventID=4673) or (EventID=4674) or (EventID=4704) or (EventID=4705) or (EventID=4713) or (EventID=4716) or (EventID=4719) or (EventID=4720) or (EventID=4722))]]
 ```
 
 ```
@@ -267,7 +306,7 @@ Security!*[System[((EventID=4723) or (EventID=4724) or (EventID=4725) or (EventI
 ```
 
 ```
-Security!*[System[((EventID=4627) or (EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4778) or (EventID=4779) or (EventID=4800) or (EventID=4801) or (EventID=5025) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004))]]
+Security!*[System[((EventID=4627) or (EventID=4756) or (EventID=4757) or (EventID=4758) or (EventID=4763) or (EventID=4768) or (EventID=4771) or (EventID=4776) or (EventID=4778) or (EventID=4779) or (EventID=4800) or (EventID=4801) or (EventID=5025) or (EventID=5038) or (EventID=5136) or (EventID=5137) or (EventID=5141) or (EventID=5168) or (EventID=7045) or (EventID=8004))]]
 ```
 
 ```
